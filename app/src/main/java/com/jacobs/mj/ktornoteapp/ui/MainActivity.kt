@@ -1,4 +1,4 @@
-package com.jacobs.mj.ktornoteapp
+package com.jacobs.mj.ktornoteapp.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
