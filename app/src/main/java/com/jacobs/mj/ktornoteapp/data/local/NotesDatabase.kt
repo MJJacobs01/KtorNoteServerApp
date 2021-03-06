@@ -1,6 +1,7 @@
 package com.jacobs.mj.ktornoteapp.data.local
 
 import androidx.room.Database
+import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.jacobs.mj.ktornoteapp.data.local.entities.Note
 
@@ -15,7 +16,7 @@ import com.jacobs.mj.ktornoteapp.data.local.entities.Note
     exportSchema = false
 )
 @TypeConverters(Converters::class)
-abstract class NotesDatabase {
+abstract class NotesDatabase:RoomDatabase() {
 
     abstract fun noteDAO(): NoteDAO
 }
