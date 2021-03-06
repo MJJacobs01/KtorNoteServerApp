@@ -21,20 +21,20 @@ interface NoteDAO {
     suspend fun insertNote(note: Note)
 
     @Query("delete from notes where id = :noteId")
-    suspend fun deleteNoteById(noteId:String)
+    suspend fun deleteNoteById(noteId: String)
 
     @Query("delete from notes where isSynced = 1")          //  1 is where boolean value is true
     suspend fun deleteAllSyncedNotes()
 
     @Query("select * from notes where id = :noteId")
-    fun observeNoteById(noteId: String):LiveData<Note>
+    fun observeNoteById(noteId: String): LiveData<Note>
 
     @Query("select * from notes where id = :noteId")
-    suspend fun getNoteById(noteId: String):Note?
+    suspend fun getNoteById(noteId: String): Note?
 
     @Query("select * from notes order by date desc")
-    fun getAllNotes():Flow<List<Note>>
+    fun getAllNotes(): Flow<List<Note>>
 
     @Query("select * from notes where isSynced = 0")        //  0 is where boolean value is false
-    suspend fun getAllUnSyncedNotes():List<Note>
+    suspend fun getAllUnSyncedNotes(): List<Note>
 }
