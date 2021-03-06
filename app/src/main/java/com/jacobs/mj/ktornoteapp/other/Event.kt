@@ -5,15 +5,15 @@ package com.jacobs.mj.ktornoteapp.other
  *
  * Generic class for all projects
  */
-open class Event <out T> (private val content:T){
+open class Event<out T>(private val content: T) {
     //  Has the event been consumed
     var hasBeenHandled = false
-    private set
+        private set
 
-    fun getContentIfNotHandled() = if (hasBeenHandled){
+    fun getContentIfNotHandled() = if (hasBeenHandled) {
         //  If the event has already been handled
         null
-    }else{
+    } else {
         //  If the event has not been handled yet
         hasBeenHandled = true
         content
