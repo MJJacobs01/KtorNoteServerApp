@@ -18,7 +18,13 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import javax.inject.Singleton
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Created by mj on 2021/03/06 at 9:12 AM
@@ -40,11 +46,38 @@ object AppModule {
     @Singleton
     fun provideBasicAuthInterceptor() = BasicAuthInterceptor()
 
+    //  This block is only for self signed certificates
     @Provides
     @Singleton
-    fun provideNoteApi(basicAuthInterceptor: BasicAuthInterceptor): NoteApi {
+    fun provideOkHttpClient(): OkHttpClient.Builder {
+        //  This is for the app to trust the self signed certificate
+        val trustAllCertificates: Array<TrustManager> = arrayOf(
+            object : X509TrustManager {
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                    /* NO-OP*/
+                }
+
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                    /* NO-OP*/
+                }
+
+                override fun getAcceptedIssuers(): Array<X509Certificate> {
+                    return arrayOf()
+                }
+            }
+        )
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCertificates, SecureRandom())
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustAllCertificates[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+    }
+
+    @Provides
+    @Singleton
+    fun provideNoteApi(basicAuthInterceptor: BasicAuthInterceptor, okHttpClient: OkHttpClient.Builder): NoteApi {
         //  We need to create OkHttp client here
-        val client = OkHttpClient.Builder()
+        val client = okHttpClient
             .addInterceptor(basicAuthInterceptor)       //  To make sure that headers are added as they are suppose to be
             .build()
 
