@@ -19,11 +19,27 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
             //  If everything goes well
             val response = noteApi.register(AccountRequest(email, password))
             //  Check condition
-            if (response.isSuccessful) {
+            if (response.isSuccessful && response.body()!!.isSuccessful) {
                 //  If the response is successful
                 Resource.success(response.body()?.message)       //  .body() is the response from the server
             } else {
-                Resource.error(response.message(), null)
+                Resource.error(response.body()?.message ?: response.message(), null)
+            }
+        } catch (e: Exception) {
+            Resource.error("Couldn't connect to the server. Check your internet connection!", null)
+        }
+    }
+
+    suspend fun login(email: String, password: String) = withContext(Dispatchers.IO) {
+        try {
+            //  If everything goes well
+            val response = noteApi.login(AccountRequest(email, password))
+            //  Check condition
+            if (response.isSuccessful && response.body()!!.isSuccessful) {
+                //  If the response is successful
+                Resource.success(response.body()?.message)       //  .body() is the response from the server
+            } else {
+                Resource.error(response.body()?.message ?: response.message(), null)
             }
         } catch (e: Exception) {
             Resource.error("Couldn't connect to the server. Check your internet connection!", null)

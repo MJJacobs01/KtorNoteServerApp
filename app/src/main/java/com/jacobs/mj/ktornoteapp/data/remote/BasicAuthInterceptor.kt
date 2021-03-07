@@ -14,8 +14,8 @@ import okhttp3.Response
 class BasicAuthInterceptor : Interceptor {
 
     //  Starts as null and then we will assign them once the user has signed in successfully
-    val email: String? = null
-    val password: String? = null
+    var email: String? = null
+    var password: String? = null
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
