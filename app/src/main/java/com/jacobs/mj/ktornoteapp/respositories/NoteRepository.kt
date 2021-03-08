@@ -2,10 +2,14 @@ package com.jacobs.mj.ktornoteapp.respositories
 
 import android.app.Application
 import com.jacobs.mj.ktornoteapp.data.local.NoteDAO
+import com.jacobs.mj.ktornoteapp.data.local.entities.Note
 import com.jacobs.mj.ktornoteapp.data.remote.NoteApi
 import com.jacobs.mj.ktornoteapp.data.remote.request.AccountRequest
 import com.jacobs.mj.ktornoteapp.other.Resource
+import com.jacobs.mj.ktornoteapp.other.checkForInternetConnection
+import com.jacobs.mj.ktornoteapp.other.networkBoundResource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -44,5 +48,24 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
         } catch (e: Exception) {
             Resource.error("Couldn't connect to the server. Check your internet connection!", null)
         }
+    }
+
+    fun getAllNotes(): Flow<Resource<List<Note>>> {
+        return networkBoundResource(
+            query = {
+                noteDAO.getAllNotes()
+            },
+            fetch = {
+                noteApi.getNotes()
+            },
+            saveFetchResult = { response ->
+                response.body()?.let {
+                    //  TODO insert notes in database
+                }
+            },
+            shouldFetch = {
+                checkForInternetConnection(context)
+            }
+        )
     }
 }

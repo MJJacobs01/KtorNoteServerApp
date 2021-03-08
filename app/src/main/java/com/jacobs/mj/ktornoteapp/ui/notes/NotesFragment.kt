@@ -1,16 +1,22 @@
 package com.jacobs.mj.ktornoteapp.ui.notes
 
 import android.content.SharedPreferences
+import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER
 import android.os.Bundle
 import android.provider.SyncStateContract
 import android.view.*
+import androidx.fragment.app.viewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.jacobs.mj.ktornoteapp.R
+import com.jacobs.mj.ktornoteapp.adapters.NoteAdapter
 import com.jacobs.mj.ktornoteapp.databinding.FragmentNotesBinding
 import com.jacobs.mj.ktornoteapp.other.Constants
+import com.jacobs.mj.ktornoteapp.other.Status
 import com.jacobs.mj.ktornoteapp.ui.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_notes.*
 import java.math.BigInteger
 import javax.inject.Inject
 
@@ -25,6 +31,10 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
     @Inject
     lateinit var sharedPreferences: SharedPreferences
 
+    private lateinit var noteAdapter: NoteAdapter
+
+    private val viewModel: NotesViewModel by viewModels()
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         //  Letting the fragment know that there is an overFlowMenu
         setHasOptionsMenu(true)
@@ -34,6 +44,16 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentNotesBinding.bind(view)
+
+        requireActivity().requestedOrientation = SCREEN_ORIENTATION_USER
+
+        setupRecyclerView()
+
+        subscribeToService()
+
+        noteAdapter.setOnItemClickListener {
+            findNavController().navigate(NotesFragmentDirections.actionNotesFragmentToNoteDetailFragment(it.id))
+        }
 
         binding.apply {
             fabAddNote.setOnClickListener(this@NotesFragment)
@@ -65,6 +85,46 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
         if (v?.id == R.id.fabAddNote) {
             findNavController().navigate(NotesFragmentDirections.actionNotesFragmentToAddEditNoteFragment(""))
         }
+    }
+
+    private fun setupRecyclerView() {
+        binding.rvNotes.apply {
+            noteAdapter = NoteAdapter()
+            adapter = noteAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+            hasFixedSize()
+        }
+    }
+
+    private fun subscribeToService() {
+        viewModel.allNotes.observe(viewLifecycleOwner, {
+            it?.let { event ->
+                val result = event.peekContent()
+                when (result.status) {
+                    Status.SUCCESS -> {
+                        noteAdapter.notes = result.data!!
+                        binding.swipeRefreshLayout.isRefreshing = true
+                    }
+                    Status.LOADING -> {
+                        result.data?.let { notes ->
+                            noteAdapter.notes = notes
+                        }
+                        binding.swipeRefreshLayout.isRefreshing = true
+                    }
+                    Status.ERROR -> {
+                        event.getContentIfNotHandled()?.let { errorResource ->
+                            errorResource.message?.let { message ->
+                                showSnackBar(message)
+                            }
+                        }
+                        result.data?.let { notes ->
+                            noteAdapter.notes = notes
+                        }
+                        binding.swipeRefreshLayout.isRefreshing = false
+                    }
+                }
+            }
+        })
     }
 
     override fun onDestroy() {
