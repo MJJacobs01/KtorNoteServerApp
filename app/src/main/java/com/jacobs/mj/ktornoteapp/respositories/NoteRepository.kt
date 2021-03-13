@@ -2,15 +2,18 @@ package com.jacobs.mj.ktornoteapp.respositories
 
 import android.app.Application
 import com.jacobs.mj.ktornoteapp.data.local.NoteDAO
+import com.jacobs.mj.ktornoteapp.data.local.entities.LocallyDeleteNoteId
 import com.jacobs.mj.ktornoteapp.data.local.entities.Note
 import com.jacobs.mj.ktornoteapp.data.remote.NoteApi
 import com.jacobs.mj.ktornoteapp.data.remote.request.AccountRequest
+import com.jacobs.mj.ktornoteapp.data.remote.request.DeleteNoteRequest
 import com.jacobs.mj.ktornoteapp.other.Resource
 import com.jacobs.mj.ktornoteapp.other.checkForInternetConnection
 import com.jacobs.mj.ktornoteapp.other.networkBoundResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import retrofit2.Response
 import javax.inject.Inject
 
 /**
@@ -56,11 +59,12 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
                 noteDAO.getAllNotes()
             },
             fetch = {
-                noteApi.getNotes()
+                syncNotes()
+                currentNoteResponse
             },
             saveFetchResult = { response ->
-                response.body()?.let {
-                    insertNotes(it)
+                response?.body()?.let {
+                    insertNotes(it.onEach { note -> note.isSynced = true })
                 }
             },
             shouldFetch = {
@@ -91,4 +95,43 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
     }
 
     suspend fun getNoteById(noteId: String) = noteDAO.getNoteById(noteId)
+
+    suspend fun deleteLocallyDeletedNoteId(deleteNoteId: String) {
+        noteDAO.deleteLocallyDeleteNoteId(deleteNoteId)
+    }
+
+    suspend fun deleteNote(noteId: String) {
+        val response = try {
+            noteApi.deleteNote(DeleteNoteRequest(noteId))
+        } catch (e: Exception) {
+            null
+        }
+        noteDAO.deleteLocallyDeleteNoteId(noteId)
+        // Check condition
+        if (response == null || !response.isSuccessful) {
+            noteDAO.insertLocallyDeletedNoteId(LocallyDeleteNoteId(noteId))
+        } else {
+            deleteLocallyDeletedNoteId(noteId)
+        }
+    }
+
+    private var currentNoteResponse:Response<List<Note>>?=null
+
+    suspend fun syncNotes() {
+        val locallyDeletedNoteIds = noteDAO.getAllLocallyDeletedNoteIds()
+        locallyDeletedNoteIds.forEach { id ->
+            deleteNote(id.deletedNoteId)
+        }
+
+        val unSyncedNotes = noteDAO.getAllUnSyncedNotes()
+        unSyncedNotes.forEach { note ->
+            insertNote(note)
+        }
+
+        currentNoteResponse = noteApi.getNotes()
+        currentNoteResponse?.body()?.let { notes->
+            noteDAO.deleteAllNotes()
+            insertNotes(notes.onEach { note -> note.isSynced = true })
+        }
+    }
 }

@@ -2,13 +2,18 @@ package com.jacobs.mj.ktornoteapp.ui.notes
 
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER
+import android.graphics.Canvas
 import android.os.Bundle
 import android.provider.SyncStateContract
 import android.view.*
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.jacobs.mj.ktornoteapp.R
 import com.jacobs.mj.ktornoteapp.adapters.NoteAdapter
 import com.jacobs.mj.ktornoteapp.databinding.FragmentNotesBinding
@@ -35,6 +40,8 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
 
     private val viewModel: NotesViewModel by viewModels()
 
+    private val swipingItem = MutableLiveData(false)
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         //  Letting the fragment know that there is an overFlowMenu
         setHasOptionsMenu(true)
@@ -50,6 +57,8 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
         setupRecyclerView()
 
         subscribeToService()
+
+        setupSwipeToRefreshLayout()
 
         noteAdapter.setOnItemClickListener {
             findNavController().navigate(NotesFragmentDirections.actionNotesFragmentToNoteDetailFragment(it.id))
@@ -93,6 +102,42 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
             adapter = noteAdapter
             layoutManager = LinearLayoutManager(requireContext())
             hasFixedSize()
+            ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(this)
+        }
+    }
+
+    private val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+        override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+            return true
+        }
+
+        override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+            val position = viewHolder.layoutPosition
+            val note = noteAdapter.notes[position]
+            viewModel.deleteNote(note.id)
+            Snackbar.make(requireView(), "Note was successfully deleted", Snackbar.LENGTH_LONG).apply {
+                setAction("Undo") {
+                    viewModel.insertNote(note)
+                    viewModel.deleteLocallyDeletedNoteId(note.id)
+                }
+                show()
+            }
+        }
+
+        override fun onChildDraw(
+            c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float,
+            dY: Float, actionState: Int, isCurrentlyActive: Boolean
+        ) {
+            super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                swipingItem.postValue(isCurrentlyActive)
+            }
+        }
+    }
+
+    private fun setupSwipeToRefreshLayout(){
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.syncAllNotes()
         }
     }
 
@@ -124,6 +169,10 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
                     }
                 }
             }
+        })
+
+        swipingItem.observe(viewLifecycleOwner, {
+            binding.swipeRefreshLayout.isEnabled = !it
         })
     }
 
