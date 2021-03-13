@@ -3,6 +3,7 @@ package com.jacobs.mj.ktornoteapp.ui.notedetail
 import android.os.Bundle
 import android.view.View
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.jacobs.mj.ktornoteapp.R
 import com.jacobs.mj.ktornoteapp.databinding.FragmentNoteDetailBinding
 import com.jacobs.mj.ktornoteapp.ui.BaseFragment
@@ -13,6 +14,8 @@ import com.jacobs.mj.ktornoteapp.ui.BaseFragment
 class NoteDetailFragment : BaseFragment(R.layout.fragment_note_detail), View.OnClickListener {
     private var _binding: FragmentNoteDetailBinding? = null
     private val binding get() = _binding!!
+
+    private val args:NoteDetailFragmentArgs by navArgs()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -25,7 +28,7 @@ class NoteDetailFragment : BaseFragment(R.layout.fragment_note_detail), View.OnC
 
     override fun onClick(v: View?) {
         if (v?.id == R.id.fabEditNote) {
-            findNavController().navigate(NoteDetailFragmentDirections.actionNoteDetailFragmentToAddEditNoteFragment(""))
+            findNavController().navigate(NoteDetailFragmentDirections.actionNoteDetailFragmentToAddEditNoteFragment(args.id))
         }
     }
 

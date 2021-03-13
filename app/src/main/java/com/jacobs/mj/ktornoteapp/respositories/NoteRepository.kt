@@ -60,7 +60,7 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
             },
             saveFetchResult = { response ->
                 response.body()?.let {
-                    //  TODO insert notes in database
+                    insertNotes(it)
                 }
             },
             shouldFetch = {
@@ -68,4 +68,27 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
             }
         )
     }
+
+    suspend fun insertNote(note: Note) {
+        val response = try {
+            noteApi.addNote(note)
+        } catch (e: Exception) {
+            null
+        }
+        //Check condition
+        if (response != null && response.isSuccessful) {
+            //  If the note was added to the server successfully
+            noteDAO.insertNote(note.apply { isSynced = true })
+        } else {
+            //  If the note was not added to the server
+            noteDAO.insertNote(note)
+        }
+    }
+
+    suspend fun insertNotes(notes: List<Note>) {
+        //  Inserting all the notes in the list to the database
+        notes.forEach { insertNote(it) }
+    }
+
+    suspend fun getNoteById(noteId: String) = noteDAO.getNoteById(noteId)
 }
