@@ -115,7 +115,7 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
         }
     }
 
-    private var currentNoteResponse:Response<List<Note>>?=null
+    private var currentNoteResponse: Response<List<Note>>? = null
 
     suspend fun syncNotes() {
         val locallyDeletedNoteIds = noteDAO.getAllLocallyDeletedNoteIds()
@@ -129,9 +129,11 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
         }
 
         currentNoteResponse = noteApi.getNotes()
-        currentNoteResponse?.body()?.let { notes->
+        currentNoteResponse?.body()?.let { notes ->
             noteDAO.deleteAllNotes()
             insertNotes(notes.onEach { note -> note.isSynced = true })
         }
     }
+
+    fun observerNoteById(noteId: String) = noteDAO.observeNoteById(noteId)
 }
