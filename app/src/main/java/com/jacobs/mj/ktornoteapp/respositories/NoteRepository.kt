@@ -6,6 +6,7 @@ import com.jacobs.mj.ktornoteapp.data.local.entities.LocallyDeleteNoteId
 import com.jacobs.mj.ktornoteapp.data.local.entities.Note
 import com.jacobs.mj.ktornoteapp.data.remote.NoteApi
 import com.jacobs.mj.ktornoteapp.data.remote.request.AccountRequest
+import com.jacobs.mj.ktornoteapp.data.remote.request.AddOwnerRequest
 import com.jacobs.mj.ktornoteapp.data.remote.request.DeleteNoteRequest
 import com.jacobs.mj.ktornoteapp.other.Resource
 import com.jacobs.mj.ktornoteapp.other.checkForInternetConnection
@@ -136,4 +137,20 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
     }
 
     fun observerNoteById(noteId: String) = noteDAO.observeNoteById(noteId)
+
+    suspend fun addOwnerToNote(owner:String, noteId: String) = withContext(Dispatchers.IO) {
+        try {
+            //  If everything goes well
+            val response = noteApi.addOwnerToNote(AddOwnerRequest(owner, noteId))
+            //  Check condition
+            if (response.isSuccessful && response.body()!!.isSuccessful) {
+                //  If the response is successful
+                Resource.success(response.body()?.message)       //  .body() is the response from the server
+            } else {
+                Resource.error(response.body()?.message ?: response.message(), null)
+            }
+        } catch (e: Exception) {
+            Resource.error("Couldn't connect to the server. Check your internet connection!", null)
+        }
+    }
 }
