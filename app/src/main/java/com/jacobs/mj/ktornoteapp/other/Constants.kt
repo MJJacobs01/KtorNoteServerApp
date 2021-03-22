@@ -7,7 +7,7 @@ object Constants {
 
     const val notesDatabaseName = "notesDB"
 
-    const val BASE_URL = "https://10.0.0.109:8002"   //  10.0.2.2 (Running emulator) 10.0.0.106 (Running on device
+    const val BASE_URL = "https://10.0.0.109:8002"   //  10.0.2.2 (Running emulator) 10.0.0.109 (Running on device
 
     //  When using emulator on WiFi, use the IPv4 address for the computer where the server is running
 

@@ -1,6 +1,8 @@
 package com.jacobs.mj.ktornoteapp.respositories
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import com.jacobs.mj.ktornoteapp.data.local.NoteDAO
 import com.jacobs.mj.ktornoteapp.data.local.entities.LocallyDeleteNoteId
 import com.jacobs.mj.ktornoteapp.data.local.entities.Note
@@ -22,6 +24,7 @@ import javax.inject.Inject
  */
 class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private val noteApi: NoteApi, private val context: Application) {
 
+    @SuppressLint("LogNotTimber")
     suspend fun register(email: String, password: String) = withContext(Dispatchers.IO) {
         try {
             //  If everything goes well
@@ -34,6 +37,7 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
                 Resource.error(response.body()?.message ?: response.message(), null)
             }
         } catch (e: Exception) {
+            Log.e("Register: ", "${e.message}" )
             Resource.error("Couldn't connect to the server. Check your internet connection!", null)
         }
     }

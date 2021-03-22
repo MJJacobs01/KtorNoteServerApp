@@ -8,6 +8,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
+import androidx.security.crypto.EncryptedSharedPreferences
 import com.jacobs.mj.ktornoteapp.R
 import com.jacobs.mj.ktornoteapp.data.local.entities.Note
 import com.jacobs.mj.ktornoteapp.databinding.FragmentAddEditNoteBinding
@@ -15,6 +16,7 @@ import com.jacobs.mj.ktornoteapp.other.Constants
 import com.jacobs.mj.ktornoteapp.other.Status
 import com.jacobs.mj.ktornoteapp.ui.BaseFragment
 import com.jacobs.mj.ktornoteapp.ui.dialogs.ColorPickerDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.item_note.view.*
 import java.util.*
 import javax.inject.Inject
@@ -25,6 +27,7 @@ import javax.inject.Inject
 
 const val FRAGMENT_TAG = "AddEditNoteFragment"
 
+@AndroidEntryPoint
 class AddEditNoteFragment : BaseFragment(R.layout.fragment_add_edit_note), View.OnClickListener {
     private var _binding: FragmentAddEditNoteBinding? = null
     private val binding get() = _binding!!

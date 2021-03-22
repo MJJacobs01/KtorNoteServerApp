@@ -148,7 +148,7 @@ class NotesFragment : BaseFragment(R.layout.fragment_notes), View.OnClickListene
                 when (result.status) {
                     Status.SUCCESS -> {
                         noteAdapter.notes = result.data!!
-                        binding.swipeRefreshLayout.isRefreshing = true
+                        binding.swipeRefreshLayout.isRefreshing = false
                     }
                     Status.LOADING -> {
                         result.data?.let { notes ->
