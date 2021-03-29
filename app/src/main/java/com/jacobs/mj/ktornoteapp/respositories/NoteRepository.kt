@@ -42,6 +42,7 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
         }
     }
 
+    @SuppressLint("LogNotTimber")
     suspend fun login(email: String, password: String) = withContext(Dispatchers.IO) {
         try {
             //  If everything goes well
@@ -54,6 +55,7 @@ class NoteRepository @Inject constructor(private val noteDAO: NoteDAO, private v
                 Resource.error(response.body()?.message ?: response.message(), null)
             }
         } catch (e: Exception) {
+            Log.e("Login: ", "${e.message}" )
             Resource.error("Couldn't connect to the server. Check your internet connection!", null)
         }
     }
